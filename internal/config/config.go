@@ -3,6 +3,7 @@ package config
 import (
 	"flag"
 	"fmt"
+	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -14,8 +15,11 @@ type Config struct {
 }
 
 type Proxy struct {
-	Host string `yaml:"host" env-required:"true"`
-	Port string `yaml:"port" env-required:"true"`
+	Host         string        `yaml:"host" env-required:"true"`
+	Port         string        `yaml:"port" env-required:"true"`
+	ReadTimeout  time.Duration `yaml:"read_timeout" env-default:"5s"`
+	WriteTimeout time.Duration `yaml:"write_timeout" env-default:"5s"`
+	IdleTimeout  time.Duration `yaml:"idle_timeout" env-default:"5s"`
 }
 
 func MustLoadConfig() *Config {

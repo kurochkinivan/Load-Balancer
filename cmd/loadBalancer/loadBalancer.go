@@ -1,13 +1,13 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"log/slog"
-	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"os"
+	"os/signal"
+	"syscall"
 
+	"github.com/kurochkinivan/load_balancer/internal/app"
 	"github.com/kurochkinivan/load_balancer/internal/config"
 )
 
@@ -16,33 +16,26 @@ const (
 	envProd  = "prod"
 )
 
-// TODO: 
-// тесты, документирование кода
+// TODO:
+// тесты, документирование кода, dockerfile + docker-compose, backends в виде []url (подождать второго задания)
 func main() {
 	cfg := config.MustLoadConfig()
-	fmt.Println(cfg)
 
 	log := setUpLogger(cfg.Env)
-	log.Info("logger is set up")
 
-	proxy := &httputil.ReverseProxy{
-		Rewrite: func(pr *httputil.ProxyRequest) {
-			server := cfg.Backends[0]
-			targetURL, _ := url.Parse(server)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-			log.Info("Перенаправление запроса", slog.String("redirect_url", targetURL.String()))
+	application := app.New(ctx, log, cfg)
+	go application.MustStart()
 
-			pr.SetURL(targetURL)
-			pr.Out.Host = targetURL.Host
-		},
-		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
-			fmt.Println("failed to get resp!")
-		},
-	}
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
+	sig := <-stop
 
-	log.Info("Прокси сервер запущен на :8080")
-	http.Handle("/", proxy)
-	http.ListenAndServe(":8080", nil)
+	log.Info("stopping application", slog.String("signal", sig.String()))
+	application.Stop()
+	log.Info("application is stopped")
 }
 
 func setUpLogger(env string) *slog.Logger {

@@ -39,7 +39,7 @@ func startTestServer(log *slog.Logger, port string) {
 	)
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Info("входящий запрос", slog.String("url", r.URL.Path), slog.String("host_header", r.Host))
+		log.Info("incoming request", slog.String("url", r.URL.Path), slog.String("host_header", r.Host))
 	})
 
 	http.ListenAndServe(":"+port, mux)
