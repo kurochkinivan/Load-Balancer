@@ -1,0 +1,14 @@
+version: '3'
+
+tasks:
+  load-balancer:
+    aliases:
+      - lb
+    cmds:
+      - go run cmd/loadBalancer/loadBalancer.go --path=config/config.yaml
+
+  servers:
+    aliases:
+      - s
+    cmds:
+      - go run cmd/servers/servers.go --servers=10 --port=8100
