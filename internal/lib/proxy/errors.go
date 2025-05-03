@@ -3,5 +3,6 @@ package proxy
 import "errors"
 
 var (
-	ErrNoServicesAvailable = errors.New("there are no servers to process the request, try again later")
+	ErrNoBackendsAvailable = errors.New("there are no servers to process the request, try again later")
+	ErrBackendRefusedConnection = errors.New("backend refused connection")
 )

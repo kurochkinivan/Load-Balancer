@@ -49,8 +49,6 @@ func main() {
 				duration := time.Since(start)
 				log.Printf("client %d: request %d completed in %v - status: %d",
 					clientID, j, duration, resp.StatusCode)
-
-				time.Sleep(100 * time.Millisecond)
 			}
 		}(i)
 	}

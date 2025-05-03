@@ -12,6 +12,7 @@ type RobinRound struct {
 	current  atomic.Int32
 }
 
+// New creates a new RobinRound balancer.
 func New(backends []*entity.Backend) *RobinRound {
 	n := len(backends)
 	return &RobinRound{
@@ -20,6 +21,9 @@ func New(backends []*entity.Backend) *RobinRound {
 	}
 }
 
+// Next returns the index of the next available backend.
+//
+// It is concurrently safe.
 func (r *RobinRound) Next() (int32, bool) {
 	var count int32
 	for ; count != r.n; count++ {
@@ -33,6 +37,9 @@ func (r *RobinRound) Next() (int32, bool) {
 	return -1, false
 }
 
+// Reset resets the balancer to its initial state.
+//
+// It is concurrently safe.
 func (r *RobinRound) Reset() {
 	r.current.Swap(0)
 }

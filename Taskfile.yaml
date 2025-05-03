@@ -7,6 +7,12 @@ tasks:
     cmds:
       - go run cmd/loadBalancer/loadBalancer.go --path=config/config.yaml
 
+  load-balancer-race:
+    aliases:
+      - lb-r
+    cmds:
+      - go run -race cmd/loadBalancer/loadBalancer.go --path=config/config.yaml
+
   servers:
     aliases:
       - s
@@ -17,4 +23,4 @@ tasks:
     aliases:
       - cl
     cmds:
-      - go run cmd/clients/clients.go --clients=10 --requests=50 --proxy=http://localhost:8080
+      - go run cmd/clients/clients.go --clients=10 --requests=1000 --proxy=http://localhost:8080

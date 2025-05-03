@@ -23,6 +23,7 @@ func New(ctx context.Context, log *slog.Logger, cfg *config.Config, backends []*
 	balancer := roundrobin.New(backends)
 
 	reverseProxy := proxy.New(log, backends, balancer)
+	go reverseProxy.StartHealthChecks(ctx, cfg.Proxy.HealthCheck.Delay, cfg.Proxy.HealthCheck.WorkersCount)
 
 	server := &http.Server{
 		Addr:         net.JoinHostPort(cfg.Proxy.Host, cfg.Proxy.Port),

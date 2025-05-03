@@ -31,6 +31,10 @@ func main() {
 		slog.String("env", cfg.Env),
 		slog.String("proxy_host", cfg.Proxy.Host),
 		slog.String("proxy_port", cfg.Proxy.Port),
+		slog.Group("backends",
+			slog.Int("count", len(cfg.Backends)),
+			slog.Any("urls", cfg.Backends),
+		),
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
