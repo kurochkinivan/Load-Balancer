@@ -17,7 +17,13 @@ tasks:
     aliases:
       - s
     cmds:
-      - go run cmd/servers/servers.go --servers=10 --port=8100
+      - go run cmd/servers/servers.go --servers=10 --start_port=8100
+
+  apace-bench:
+    aliases:
+      - ab
+    cmds: 
+      - ab -n 20000 -c 1000 http://localhost:8080/
 
   clients:
     aliases:

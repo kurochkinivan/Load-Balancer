@@ -12,7 +12,7 @@ import (
 func main() {
 	var serversCount, startPort int
 	flag.IntVar(&serversCount, "servers", 5, "specify running servers count")
-	flag.IntVar(&startPort, "port", 8090, "specify the first port for the servers")
+	flag.IntVar(&startPort, "start_port", 8090, "specify the first port for the servers")
 	flag.Parse()
 
 	handler := slog.NewTextHandler(os.Stdout, nil)
