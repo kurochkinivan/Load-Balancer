@@ -12,3 +12,9 @@ tasks:
       - s
     cmds:
       - go run cmd/servers/servers.go --servers=10 --port=8100
+
+  clients:
+    aliases:
+      - cl
+    cmds:
+      - go run cmd/clients/clients.go --clients=10 --requests=50 --proxy=http://localhost:8080

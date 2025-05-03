@@ -29,8 +29,6 @@ func New(log *slog.Logger, backends []*entity.Backend, balancer LoadBalanceAlgor
 	}
 }
 
-// TODO: точно ли все урлы верны? ПЕРЕДЕЛАТЬ backend в []*url.Url
-// TODO: что если все backend упадут?
 func (p *ReverseProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	next, ok := p.balancer.Next()
 	if !ok {
