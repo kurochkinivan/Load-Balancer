@@ -7,19 +7,19 @@ proxy:
   write_timeout: 45s
   idle_timeout: 90s
   health_check:
-    delay: 2s
+    delay: 5s
     workers_count: 10
 
 
 backends:
-  # - http://localhost:8100
-  # - http://localhost:8101
-  # - http://localhost:8102
-  # - http://localhost:8103
-  # - http://localhost:8104
-  # - http://localhost:8105
-  # - http://localhost:8106
-  # - http://localhost:8107
+  - http://localhost:8100
+  - http://localhost:8101
+  - http://localhost:8102
+  - http://localhost:8103
+  - http://localhost:8104
+  - http://localhost:8105
+  - http://localhost:8106
+  - http://localhost:8107
   - http://localhost:8108
   - http://localhost:8109
   - http://localhost:8110
