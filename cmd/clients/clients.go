@@ -19,7 +19,7 @@ func main() {
 
 	wg := new(sync.WaitGroup)
 
-	for i := 0; i < numClients; i++ {
+	for i := range numClients {
 		wg.Add(1)
 		go func(clientID int) {
 			defer wg.Done()
@@ -28,7 +28,7 @@ func main() {
 				Timeout: 10 * time.Second,
 			}
 
-			for j := 0; j < requestsPerClient; j++ {
+			for j := range requestsPerClient {
 				start := time.Now()
 
 				reqURL := fmt.Sprintf("%s/api/data?client=%d&req=%d", proxyAddr, clientID, j)
