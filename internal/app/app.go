@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/kurochkinivan/load_balancer/internal/config"
+	"github.com/kurochkinivan/load_balancer/internal/entity"
 	"github.com/kurochkinivan/load_balancer/internal/lib/proxy"
 	roundrobin "github.com/kurochkinivan/load_balancer/internal/lib/roundRobin"
 )
@@ -18,11 +19,10 @@ type App struct {
 	server *http.Server
 }
 
-func New(ctx context.Context, log *slog.Logger, cfg *config.Config) *App {
-	n := len(cfg.Backends)
-	balancer := roundrobin.New(n)
-	
-	reverseProxy := proxy.New(log, cfg.Backends, balancer)
+func New(ctx context.Context, log *slog.Logger, cfg *config.Config, backends []*entity.Backend) *App {
+	balancer := roundrobin.New(backends)
+
+	reverseProxy := proxy.New(log, backends, balancer)
 
 	server := &http.Server{
 		Addr:         net.JoinHostPort(cfg.Proxy.Host, cfg.Proxy.Port),

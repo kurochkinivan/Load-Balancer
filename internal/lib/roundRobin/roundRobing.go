@@ -1,22 +1,36 @@
 package roundrobin
 
-import "sync/atomic"
+import (
+	"sync/atomic"
+
+	"github.com/kurochkinivan/load_balancer/internal/entity"
+)
 
 type RobinRound struct {
-	n       int32
-	current atomic.Int32
+	n        int32
+	backends []*entity.Backend
+	current  atomic.Int32
 }
 
-func New(n int) *RobinRound {
-	if n <= 0 {
-		panic("n should be greater that 0")
+func New(backends []*entity.Backend) *RobinRound {
+	n := len(backends)
+	return &RobinRound{
+		n:        int32(n),
+		backends: backends,
 	}
-	return &RobinRound{n: int32(n)}
 }
 
-func (r *RobinRound) Next() int32 {
-	current := r.current.Add(1)
-	return (current - 1) % r.n
+func (r *RobinRound) Next() (int32, bool) {
+	var count int32
+	for ; count != r.n; count++ {
+		current := r.current.Add(1)
+		idx := (current - 1) % r.n
+
+		if r.backends[idx].IsAvailable() {
+			return idx, true
+		}
+	}
+	return -1, false
 }
 
 func (r *RobinRound) Reset() {
