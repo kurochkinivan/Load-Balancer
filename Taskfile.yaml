@@ -7,23 +7,35 @@ tasks:
     cmds:
       - go run cmd/loadBalancer/loadBalancer.go --path=config/config.yaml
 
-  load-balancer-race:
-    aliases:
-      - lb-r
-    cmds:
-      - go run -race cmd/loadBalancer/loadBalancer.go --path=config/config.yaml
-
   servers:
     aliases:
       - s
     cmds:
       - go run cmd/servers/servers.go --servers=10 --start_port=8100
 
+  docker-up:
+    aliases:
+      - dk_up
+    cmds:
+      - docker compose up -d
+
+  docker-down:
+    aliases:
+      - dk_down
+    cmds:
+      - docker compose down
+
   apace-bench:
     aliases:
       - ab
     cmds: 
       - ab -n 20000 -c 1000 http://localhost:8080/
+
+  load-balancer-race:
+    aliases:
+      - lb-r
+    cmds:
+      - go run -race cmd/loadBalancer/loadBalancer.go --path=config/config.yaml
 
   clients:
     aliases:

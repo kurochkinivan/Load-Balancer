@@ -40,8 +40,8 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	application := app.New(log, cfg, backends)
-	go application.MustStart(ctx)
+	application := app.New(ctx, log, cfg, backends)
+	go application.Run(ctx)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)

@@ -10,7 +10,6 @@ proxy:
     interval: 30s
     workers_count: 10
 
-
 backends:
   - http://localhost:8100
   - http://localhost:8101
@@ -23,3 +22,10 @@ backends:
   - http://localhost:8108
   - http://localhost:8109
   - http://localhost:8110
+
+postgresql:
+  host: localhost
+  port: 5435
+  username: postgres
+  password: postgres
+  db: clients
