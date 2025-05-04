@@ -11,6 +11,7 @@ import (
 
 	"github.com/kurochkinivan/load_balancer/internal/config"
 	"github.com/kurochkinivan/load_balancer/internal/entity"
+	"github.com/kurochkinivan/load_balancer/internal/lib/middleware"
 	"github.com/kurochkinivan/load_balancer/internal/lib/proxy"
 	roundrobin "github.com/kurochkinivan/load_balancer/internal/lib/roundRobin"
 )
@@ -30,7 +31,7 @@ func New(log *slog.Logger, cfg *config.Config, backends []*entity.Backend) *App 
 
 	server := &http.Server{
 		Addr:         net.JoinHostPort(cfg.Proxy.Host, cfg.Proxy.Port),
-		Handler:      reverseProxy,
+		Handler:      middleware.LogMiddleware(log, reverseProxy),
 		ReadTimeout:  cfg.Proxy.ReadTimeout,
 		WriteTimeout: cfg.Proxy.WriteTimeout,
 		IdleTimeout:  cfg.Proxy.IdleTimeout,

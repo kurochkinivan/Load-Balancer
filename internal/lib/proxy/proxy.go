@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	"github.com/kurochkinivan/load_balancer/internal/entity"
+	"github.com/kurochkinivan/load_balancer/internal/lib/sl"
 )
 
 type LoadBalanceAlgorithm interface {
@@ -34,7 +35,7 @@ func New(log *slog.Logger, backends []*entity.Backend, balancer LoadBalanceAlgor
 }
 
 // ServeHTTP implements the http.Handler interface.
-// It proxies the incoming request to one of the available backend servers.
+// It proxies the incoming request to one of the available backend servers and logs request details.
 func (p *ReverseProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	next, ok := p.balancer.Next()
 	if !ok {
@@ -50,18 +51,13 @@ func (p *ReverseProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // createProxy creates a new httputil.ReverseProxy instance that proxies requests to the given backend server.
 func (p *ReverseProxy) createProxy(backend *entity.Backend) *httputil.ReverseProxy {
-	log := p.log.With(
-		slog.String("backend", backend.URL.Host),
-	)
-
 	return &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
-			log.Info("proxying request", slog.String("path", pr.Out.URL.Path))
 			pr.SetURL(backend.URL)
 			pr.Out.Host = backend.URL.Host
 		},
 		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
-			p.handleError(w, r, err, backend, log)
+			p.handleError(w, r, err, backend)
 		},
 	}
 }
@@ -69,14 +65,20 @@ func (p *ReverseProxy) createProxy(backend *entity.Backend) *httputil.ReversePro
 // handleError is called when an error occurs while proxying a request.
 // It logs the error and sets the backend server as unavailable if the error is syscall.ECONNREFUSED.
 // If the error is different from syscall.ECONNREFUSED, it returns 502 BadGateway error
-func (p *ReverseProxy) handleError(w http.ResponseWriter, r *http.Request, err error, backend *entity.Backend, log *slog.Logger) {
+func (p *ReverseProxy) handleError(w http.ResponseWriter, r *http.Request, err error, backend *entity.Backend) {
+	clientAddr := r.RemoteAddr
+	log := p.log.With(
+		slog.String("client", clientAddr),
+		slog.String("backend", backend.URL.Host),
+	)
+
 	if errors.Is(err, syscall.ECONNREFUSED) {
-		log.Warn(ErrBackendRefusedConnection.Error())
+		log.Warn("backend refused connection", sl.Error(ErrBackendRefusedConnection))
 		backend.SetAvailable(false)
 		p.ServeHTTP(w, r)
 		return
 	}
 
-	log.Error("proxy error", slog.String("error", err.Error()))
+	log.Error("proxy error", sl.Error(err))
 	http.Error(w, "Bad Gateway", http.StatusBadGateway)
 }
