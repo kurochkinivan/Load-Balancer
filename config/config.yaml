@@ -22,4 +22,4 @@ backends:
   - http://localhost:8107
   - http://localhost:8108
   - http://localhost:8109
-  # - http://localhost:8110
+  - http://localhost:8110
