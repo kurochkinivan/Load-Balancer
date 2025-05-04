@@ -3,9 +3,11 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/kurochkinivan/load_balancer/internal/config"
 	"github.com/kurochkinivan/load_balancer/internal/entity"
@@ -14,16 +16,17 @@ import (
 )
 
 type App struct {
-	log    *slog.Logger
-	ctx    context.Context
-	server *http.Server
+	log                *slog.Logger
+	server             *http.Server
+	reverseProxy       *proxy.ReverseProxy
+	healtCheckInterval time.Duration
+	workers            int
 }
 
-func New(ctx context.Context, log *slog.Logger, cfg *config.Config, backends []*entity.Backend) *App {
+func New(log *slog.Logger, cfg *config.Config, backends []*entity.Backend) *App {
 	balancer := roundrobin.New(backends)
 
 	reverseProxy := proxy.New(log, backends, balancer)
-	go reverseProxy.StartHealthChecks(ctx, cfg.Proxy.HealthCheck.Delay, cfg.Proxy.HealthCheck.WorkersCount)
 
 	server := &http.Server{
 		Addr:         net.JoinHostPort(cfg.Proxy.Host, cfg.Proxy.Port),
@@ -34,26 +37,33 @@ func New(ctx context.Context, log *slog.Logger, cfg *config.Config, backends []*
 	}
 
 	return &App{
-		log:    log,
-		ctx:    ctx,
-		server: server,
+		log:                log,
+		server:             server,
+		reverseProxy:       reverseProxy,
+		healtCheckInterval: cfg.Proxy.HealthCheck.Interval,
+		workers:            cfg.Proxy.HealthCheck.WorkersCount,
 	}
 }
 
-func (a *App) MustStart() {
-	if err := a.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+func (a *App) MustStart(ctx context.Context) {
+	if err := a.Start(ctx); err != nil {
 		panic(err)
 	}
 }
 
-func (a *App) Start() error {
-	a.log.Info("listening to the server...", slog.String("addr", a.server.Addr))
+func (a *App) Start(ctx context.Context) error {
+	go a.reverseProxy.StartHealthChecks(ctx, a.healtCheckInterval, a.workers)
 
-	return a.server.ListenAndServe()
+	a.log.Info("listening to the server...", slog.String("addr", a.server.Addr))
+	err := a.server.ListenAndServe()
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return fmt.Errorf("failed to listen and serve: %w", err)
+	}
+	return nil
 }
 
-func (a *App) Stop() {
-	if err := a.server.Shutdown(a.ctx); err != nil {
+func (a *App) Stop(ctx context.Context) {
+	if err := a.server.Shutdown(ctx); err != nil {
 		a.log.Error("failed to shutdown the server", slog.String("err", err.Error()))
 	}
 }

@@ -11,22 +11,21 @@ import (
 	"github.com/kurochkinivan/load_balancer/internal/entity"
 )
 
-// StartHealthChecks starts periodical health checks for all backends.
+// StartHealthChecks starts checking health of all backends with given interval and workers number.
 //
-// It will create a separate goroutine for each backend and check its health every given delay.
-//
-// The function will stop checking health when the context is canceled.
-//
-// The function uses a counting semaphore strategy to limit the number of concurrent health checks.
-// The number of concurrent checks is limited by the number of workers.
-func (p *ReverseProxy) StartHealthChecks(ctx context.Context, delay time.Duration, workers int) {
-	ticker := time.NewTicker(delay)
+// It uses counting semaphore strategy to limit the number of concurrent workers.
+// It will stop checking health if context is canceled.
+func (p *ReverseProxy) StartHealthChecks(ctx context.Context, interval time.Duration, workers int) {
+	ticker := time.NewTicker(interval)
 	tokens := make(chan struct{}, workers)
+
+	p.log.Info("starting initial health check")
+	p.healthCheckAllBackends(tokens)
 
 	for {
 		select {
 		case <-ticker.C:
-			p.checkAllBackends(tokens)
+			p.healthCheckAllBackends(tokens)
 		case <-ctx.Done():
 			p.log.Info("health checks stopped due to context cancellation")
 			ticker.Stop()
@@ -35,11 +34,10 @@ func (p *ReverseProxy) StartHealthChecks(ctx context.Context, delay time.Duratio
 	}
 }
 
-// checkAllBackends checks the health of all backends and updates their availability.
+// healthCheckAllBackends checks health of all backends and sets availability accordingly.
 //
-// It will start a separate goroutine for each backend and limit the number of concurrent checks
-// using a counting semaphore strategy.
-func (p *ReverseProxy) checkAllBackends(tokens chan struct{}) {
+// Tokens is a buffered channel that is used to limit the number of concurrent workers.
+func (p *ReverseProxy) healthCheckAllBackends(tokens chan struct{}) {
 	p.log.Info("starting health check for all backends")
 
 	for _, backend := range p.backends {

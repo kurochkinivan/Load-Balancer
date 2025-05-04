@@ -7,7 +7,7 @@ proxy:
   write_timeout: 45s
   idle_timeout: 90s
   health_check:
-    delay: 5s
+    interval: 5s
     workers_count: 10
 
 

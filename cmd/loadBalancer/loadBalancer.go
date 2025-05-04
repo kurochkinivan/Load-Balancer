@@ -40,15 +40,15 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	application := app.New(ctx, log, cfg, backends)
-	go application.MustStart()
+	application := app.New(log, cfg, backends)
+	go application.MustStart(ctx)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 	sig := <-stop
 
 	log.Info("stopping application", slog.String("signal", sig.String()))
-	application.Stop()
+	application.Stop(ctx)
 	log.Info("application is stopped")
 }
 

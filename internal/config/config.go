@@ -20,12 +20,12 @@ type Proxy struct {
 	ReadTimeout  time.Duration `yaml:"read_timeout" env-default:"5s"`
 	WriteTimeout time.Duration `yaml:"write_timeout" env-default:"5s"`
 	IdleTimeout  time.Duration `yaml:"idle_timeout" env-default:"5s"`
-	HealthCheck  HealthCheck  `yaml:"health_check"`
+	HealthCheck  HealthCheck   `yaml:"health_check"`
 }
 
 type HealthCheck struct {
-	Delay       time.Duration `yaml:"delay" env-default:"30s"`
-	WorkersCount int          `yaml:"workers_count" env-default:"10"`
+	Interval     time.Duration `yaml:"interval" env-default:"30s"`
+	WorkersCount int           `yaml:"workers_count" env-default:"10"`
 }
 
 func MustLoadConfig() *Config {
@@ -62,4 +62,3 @@ func fetchConfigPath() (string, error) {
 
 	return path, nil
 }
-
