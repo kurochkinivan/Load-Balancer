@@ -7,9 +7,3 @@ CREATE TABLE IF NOT EXISTS clients (
     PRIMARY KEY (id)
 );
 
-INSERT INTO clients 
-        (ip_address, capacity, rate_per_second) 
-    VALUES 
-        ('127.0.0.1', 100, 10)
-    ON CONFLICT (ip_address) DO NOTHING;
-

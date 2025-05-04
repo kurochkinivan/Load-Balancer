@@ -68,7 +68,7 @@ func (p *ReverseProxy) healthCheckAllBackends(tokens chan struct{}) {
 			resp, err := http.Get(healthURL)
 			if err != nil {
 				if errors.Is(err, syscall.ECONNREFUSED) {
-					log.Warn("backend is unhealthy", slog.String("error", ErrBackendRefusedConnection.Error()))
+					log.Warn("backend is unhealthy", slog.String("error", "backend refused connection"))
 				} else {
 					log.Warn("error while checking backend health", slog.String("error", err.Error()))
 				}

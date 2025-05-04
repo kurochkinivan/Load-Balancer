@@ -46,7 +46,6 @@ func (c *ClientsUseCase) Client(ctx context.Context, ipAdress string) (*entity.C
 
 	client, err := c.storage.Client(ctx, ipAdress)
 	if err != nil {
-		fmt.Println(err)
 		return nil, false
 	}
 

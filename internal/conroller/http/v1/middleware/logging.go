@@ -10,8 +10,8 @@ import (
 // It logs the client IP, request path, duration of the request, and the status code of the response.
 //
 // The logger is expected to be a *slog.Logger.
-func LogMiddleware(logger *slog.Logger, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func LogMiddleware(logger *slog.Logger, next errorHandler) errorHandler {
+	return func(w http.ResponseWriter, r *http.Request) error {
 		start := time.Now()
 		path := r.URL.Path
 		clientIP := r.RemoteAddr
@@ -20,17 +20,19 @@ func LogMiddleware(logger *slog.Logger, next http.Handler) http.Handler {
 			slog.String("client", clientIP),
 			slog.String("path", path),
 		)
-
 		log.Info("handling request")
 
 		rw := &responseWriterWrapper{ResponseWriter: w}
-		next.ServeHTTP(rw, r)
+
+		err := next(rw, r)
 
 		log.Info("request completed",
 			slog.Duration("duration", time.Since(start)),
 			slog.Int("status", rw.status),
 		)
-	})
+
+		return err
+	}
 }
 
 // responseWriterWrapper is a wrapper around http.ResponseWriter that records the status code of the response.

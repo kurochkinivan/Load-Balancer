@@ -1,44 +1,54 @@
 version: '3'
 
 tasks:
+  # === Запуск всего проекта ===
+  start:
+    desc: "Запуск всего проекта"
+    cmds:
+      - task servers &
+      - task docker-up 
+      - task load-balancer
+
+  # === Балансировщик нагрузки ===
   load-balancer:
-    aliases:
-      - lb
+    aliases: [lb]
+    desc: "Запуск балансировщика"
     cmds:
       - go run cmd/loadBalancer/loadBalancer.go --path=config/config.yaml
 
+  load-balancer-race:
+    aliases: [lb-r]
+    desc: "Запуск балансировщика с проверкой гонок (-race)"
+    cmds:
+      - go run -race cmd/loadBalancer/loadBalancer.go --path=config/config.yaml
+
+  # === Тестовые сервера (backend) ===
   servers:
-    aliases:
-      - s
+    aliases: [s]
+    desc: "Запуск фейковых backend-серверов"
     cmds:
       - go run cmd/servers/servers.go --servers=10 --start_port=8100
 
+  # === Docker команды ===
   docker-up:
-    aliases:
-      - dk_up
+    aliases: [dk_up]
+    desc: "Поднимает posgres через docker-compose"
     cmds:
       - docker compose up -d
 
   docker-down:
-    aliases:
-      - dk_down
+    aliases: [dk_down]
+    desc: "Останавливает контейнеры"
     cmds:
       - docker compose down
 
-  apace-bench:
-    aliases:
-      - ab
-    cmds: 
+  # === Нагрузочные тесты ===
+  bench:
+    desc: "Нагрузочный тест с 20000 запросами, 1000 параллельных соединений"
+    cmds:
       - ab -n 20000 -c 1000 http://localhost:8080/
 
-  load-balancer-race:
-    aliases:
-      - lb-r
+  bench-small:
+    desc: "Маленький нагрузочный тест (5000 / 100)"
     cmds:
-      - go run -race cmd/loadBalancer/loadBalancer.go --path=config/config.yaml
-
-  clients:
-    aliases:
-      - cl
-    cmds:
-      - go run cmd/clients/clients.go --clients=10 --requests=1000 --proxy=http://localhost:8080
+      - ab -n 5000 -c 100 http://localhost:8080/

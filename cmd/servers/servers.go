@@ -34,12 +34,13 @@ func main() {
 
 func startTestServer(log *slog.Logger, port string) {
 	mux := http.NewServeMux()
-	log = log.With(
-		slog.String("port", port),
-	)
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Info("incoming request", slog.String("url", r.URL.Path), slog.String("host_header", r.Host))
+		// log.Info("incoming request",
+		// 	slog.String("url", r.URL.Path),
+		// 	slog.String("host_header", r.Host),
+		// 	slog.String("port", port),
+		// )
 	})
 
 	http.ListenAndServe(":"+port, mux)

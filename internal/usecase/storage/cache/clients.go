@@ -1,22 +1,27 @@
 package cache
 
 import (
+	"context"
+	"log/slog"
 	"sync"
+	"time"
 
 	"github.com/kurochkinivan/load_balancer/internal/entity"
 )
 
-type Cache struct {
+type ClientsCache struct {
+	log     *slog.Logger
 	clients *sync.Map // string (ip_adress) -> *entity.Client
 }
 
-func NewCache() *Cache {
-	return &Cache{
+func NewClientsCache(log *slog.Logger) *ClientsCache {
+	return &ClientsCache{
+		log:     log,
 		clients: new(sync.Map),
 	}
 }
 
-func (c *Cache) Client(ip_address string) (*entity.Client, bool) {
+func (c *ClientsCache) Client(ip_address string) (*entity.Client, bool) {
 	val, ok := c.clients.Load(ip_address)
 	if !ok {
 		return nil, false
@@ -24,10 +29,33 @@ func (c *Cache) Client(ip_address string) (*entity.Client, bool) {
 	return val.(*entity.Client), true
 }
 
-func (c *Cache) AddClient(client *entity.Client) {
+func (c *ClientsCache) AddClient(client *entity.Client) {
 	c.clients.Store(client.IPAddress, client)
 }
 
-func (c *Cache) DeleteClient(ip_address string) {
+func (c *ClientsCache) DeleteClient(ip_address string) {
 	c.clients.Delete(ip_address)
+}
+
+func (c *ClientsCache) refillAllClients() {
+	c.clients.Range(func(key, value any) bool {
+		client := value.(*entity.Client)
+		client.RefillTokensOncePerSecond()
+		return true
+	})
+}
+
+func (c *ClientsCache) StartTokenRefiller(ctx context.Context) {
+	ticker := time.NewTicker(1 * time.Second)
+	c.log.Info("starting token refiller...")
+
+	for {
+		select {
+		case <-ticker.C:
+			c.refillAllClients()
+		case <-ctx.Done():
+			c.log.Info("token refiller is terminated due to context cancellation")
+			return
+		}
+	}
 }

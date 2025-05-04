@@ -12,6 +12,7 @@ services:
       - POSTGRES_DB=clients
     volumes:
       - ./pg_data:/var/lib/postgresql/data
+      - ./migrations/1_init.up.sql:/docker-entrypoint-initdb.d/001.sql
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready", "-U", "postgres", "-d", "clients" ]
       interval: 10s

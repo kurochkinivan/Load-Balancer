@@ -16,12 +16,14 @@ import (
 	"github.com/kurochkinivan/load_balancer/internal/conroller/http/v1/proxy"
 	"github.com/kurochkinivan/load_balancer/internal/entity"
 	roundrobin "github.com/kurochkinivan/load_balancer/internal/lib/roundRobin"
+	"github.com/kurochkinivan/load_balancer/internal/usecase/storage/cache"
 )
 
 type App struct {
 	log                *slog.Logger
 	server             *http.Server
 	reverseProxy       *proxy.ReverseProxy
+	clientsCache       *cache.ClientsCache
 	healtCheckInterval time.Duration
 	workers            int
 }
@@ -34,6 +36,7 @@ func New(
 	log *slog.Logger,
 	cfg *config.Config,
 	backends []*entity.Backend,
+	clientsCache *cache.ClientsCache,
 	clientsUseCase v1.ClientsUseCase,
 	clientProvider middleware.ClientProvider,
 ) *App {
@@ -43,15 +46,23 @@ func New(
 	reverseProxy := proxy.New(log, backends, balancer)
 	r.NotFound = reverseProxy
 
-	clietnsHandler := v1.NewClientsHandler(clientsUseCase, bytesLimit)
-	clietnsHandler.Register(r)
+	clientsHandler := v1.NewClientsHandler(clientsUseCase, bytesLimit)
+	clientsHandler.Register(r)
 
-	handler := middleware.RateLimitingMiddleware(log, clientProvider, r)
+	// Base handler
+	baseHandler := func(w http.ResponseWriter, req *http.Request) error {
+		r.ServeHTTP(w, req)
+		return nil
+	}
+
+	// Middleware chain
+	handler := middleware.RateLimitingMiddleware(log, clientProvider, baseHandler)
 	handler = middleware.LogMiddleware(log, handler)
+	finalHandler := middleware.ErrorMiddleware(handler)
 
 	server := &http.Server{
 		Addr:         net.JoinHostPort(cfg.Proxy.Host, cfg.Proxy.Port),
-		Handler:      handler,
+		Handler:      finalHandler,
 		ReadTimeout:  cfg.Proxy.ReadTimeout,
 		WriteTimeout: cfg.Proxy.WriteTimeout,
 		IdleTimeout:  cfg.Proxy.IdleTimeout,
@@ -61,6 +72,7 @@ func New(
 		log:                log,
 		server:             server,
 		reverseProxy:       reverseProxy,
+		clientsCache:       clientsCache,
 		healtCheckInterval: cfg.Proxy.HealthCheck.Interval,
 		workers:            cfg.Proxy.HealthCheck.WorkersCount,
 	}
@@ -74,6 +86,7 @@ func (a *App) MustStart(ctx context.Context) {
 
 func (a *App) Start(ctx context.Context) error {
 	go a.reverseProxy.StartHealthChecks(ctx, a.healtCheckInterval, a.workers)
+	go a.clientsCache.StartTokenRefiller(ctx)
 
 	a.log.Info("listening to the server...", slog.String("addr", a.server.Addr))
 	err := a.server.ListenAndServe()

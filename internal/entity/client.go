@@ -32,7 +32,7 @@ func (c *Client) Allow() bool {
 func (c *Client) RefillTokensOncePerSecond() {
 	for {
 		current := c.Tokens.Load()
-		newTokens := min(current+int32(c.RatePerSecond), int32(c.Capacity))
+		newTokens := min(current+c.RatePerSecond, c.Capacity)
 
 		if c.Tokens.CompareAndSwap(current, newTokens) {
 			break

@@ -24,11 +24,11 @@ func New(ctx context.Context, log *slog.Logger, cfg *config.Config, backends []*
 	pgApp := pgapp.New(ctx, log, cfg.PostgreSQL)
 
 	clientsStorage := pg.New(pgApp.Pool)
-	clientsCache := cache.NewCache()
-	
+	clientsCache := cache.NewClientsCache(log)
+
 	clientsUseCase := usecase.New(log, clientsStorage, clientsCache)
 
-	httpApp := httpapp.New(log, cfg, backends, clientsUseCase, clientsUseCase)
+	httpApp := httpapp.New(log, cfg, backends, clientsCache, clientsUseCase, clientsUseCase)
 
 	return &App{
 		log:           log,
