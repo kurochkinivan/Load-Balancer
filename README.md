@@ -20,6 +20,20 @@ docker compose up -d
 go run cmd/loadBalancer/loadBalancer.go --path=config/config.yaml
 ```
 
+**Запуск тестов:**
+
+```bash
+## Легкий тест:
+ab -n 5000 -c 100 http://localhost:8080/
+
+## Тяжелый тест
+ab -n 20000 -c 1000 http://localhost:8080/
+```
+
+**Swagger**
+
+Сваггер лежит в docs/swagger.yaml (сорян, сегодня без go-swagger)
+
 ## Описание проекта:
 
 #### При запуске проекта:
