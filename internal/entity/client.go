@@ -11,6 +11,19 @@ type Client struct {
 	Tokens        atomic.Int32
 }
 
+func NewDefaultClient(ipAdress string) *Client {
+	client := &Client{
+		IPAddress:     ipAdress,
+		Name:          "",
+		Capacity:      100,
+		RatePerSecond: 10,
+		Tokens:        atomic.Int32{},
+	}
+	client.Tokens.Store(client.Capacity)
+
+	return client
+}
+
 // Allow checks if client has available tokens.
 //
 // This method is concurrently safe.

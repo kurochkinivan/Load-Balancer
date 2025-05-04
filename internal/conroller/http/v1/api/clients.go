@@ -12,7 +12,7 @@ import (
 )
 
 type ClientsUseCase interface {
-	GetClients(ctx context.Context) ([]*entity.Client, error)
+	Clients(ctx context.Context) ([]*entity.Client, error)
 	CreateClient(ctx context.Context, client *entity.Client) error
 	DeleteClient(ctx context.Context, ipAdress string) error
 }
@@ -36,7 +36,7 @@ func (h *ClientsHandler) Register(router *httprouter.Router) {
 }
 
 func (h *ClientsHandler) clients(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	clients, err := h.clientsUseCase.GetClients(r.Context())
+	clients, err := h.clientsUseCase.Clients(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -52,8 +52,8 @@ func (h *ClientsHandler) clients(w http.ResponseWriter, r *http.Request, params 
 type createClientRequest struct {
 	IPAddress     string `json:"ip_address"`
 	Name          string `json:"name"`
-	Capacity      int32    `json:"capacity"`
-	RatePerSecond int32    `json:"rate_per_second"`
+	Capacity      int32  `json:"capacity"`
+	RatePerSecond int32  `json:"rate_per_second"`
 }
 
 func (h *ClientsHandler) createClient(w http.ResponseWriter, r *http.Request, params httprouter.Params) {

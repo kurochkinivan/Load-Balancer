@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"context"
 	"sync"
 
 	"github.com/kurochkinivan/load_balancer/internal/entity"
@@ -15,14 +14,6 @@ func NewCache() *Cache {
 	return &Cache{
 		clients: new(sync.Map),
 	}
-}
-
-func (c *Cache) LoadClients(ctx context.Context, clients []*entity.Client) error {
-	for _, client := range clients {
-		c.clients.Store(client.IPAddress, client)
-	}
-
-	return nil
 }
 
 func (c *Cache) Client(ip_address string) (*entity.Client, bool) {

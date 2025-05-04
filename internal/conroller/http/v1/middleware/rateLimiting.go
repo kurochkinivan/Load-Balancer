@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/kurochkinivan/load_balancer/internal/entity"
 )
@@ -12,14 +13,22 @@ type ClientProvider interface {
 	Client(ctx context.Context, ipAdress string) (*entity.Client, bool)
 }
 
-func RateLimitingMiddleware(logger *slog.Logger, clientProvider ClientProvider, next http.Handler) http.Handler {
+type ClientCreator interface {
+	CreateClient(ctx context.Context, client *entity.Client) error
+}
+
+func RateLimitingMiddleware(
+	logger *slog.Logger,
+	clientProvider ClientProvider,
+	next http.Handler,
+) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ipAddress := r.RemoteAddr
+		ipAddress := strings.Split(r.RemoteAddr, ":")[0]
 
 		client, ok := clientProvider.Client(r.Context(), ipAddress)
 		if !ok {
-			logger.Warn("Rate limit not configured for this client")
-			
+			http.Error(w, "rate limit not configured for this client", http.StatusForbidden)
+			return
 		}
 
 		if !client.Allow() {

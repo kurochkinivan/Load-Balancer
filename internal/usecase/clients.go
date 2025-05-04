@@ -33,38 +33,20 @@ type ClientStorage interface {
 }
 
 type ClientCache interface {
-	LoadClients(ctx context.Context, clients []*entity.Client) error
 	Client(ip_address string) (*entity.Client, bool)
 	AddClient(client *entity.Client)
 	DeleteClient(ip_address string)
 }
 
-func (c *ClientsUseCase) LoadClients(ctx context.Context) error {
-	const op = "ClientsUseCase.LoadClients"
-
-	clients, err := c.GetClients(ctx)
-	if err != nil {
-		c.log.Error("failed to get clients", sl.Error(err))
-		return fmt.Errorf("%s: %w", op, err)
-	}
-
-	err = c.cache.LoadClients(ctx, clients)
-	if err != nil {
-		c.log.Error("failed to load clients to cache", sl.Error(err))
-		return fmt.Errorf("%s: %w", op, err)
-	}
-
-	return nil
-}
-
 func (c *ClientsUseCase) Client(ctx context.Context, ipAdress string) (*entity.Client, bool) {
 	client, ok := c.cache.Client(ipAdress)
 	if ok {
-		return client, false
+		return client, true
 	}
 
 	client, err := c.storage.Client(ctx, ipAdress)
 	if err != nil {
+		fmt.Println(err)
 		return nil, false
 	}
 
@@ -73,7 +55,7 @@ func (c *ClientsUseCase) Client(ctx context.Context, ipAdress string) (*entity.C
 	return client, true
 }
 
-func (c *ClientsUseCase) GetClients(ctx context.Context) ([]*entity.Client, error) {
+func (c *ClientsUseCase) Clients(ctx context.Context) ([]*entity.Client, error) {
 	const op = "ClientsUseCase.GetClients"
 
 	clients, err := c.storage.Clients(ctx)
