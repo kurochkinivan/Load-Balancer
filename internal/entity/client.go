@@ -1,39 +1,25 @@
 package entity
 
-import "sync/atomic"
+import (
+	"sync/atomic"
+)
 
 type Client struct {
 	ID            int64  `json:"id"`
 	IPAddress     string `json:"ip_address"`
-	Name          string `json:"name"`
 	Capacity      int32  `json:"capacity"`
 	RatePerSecond int32  `json:"rate_per_second"`
 	Tokens        atomic.Int32
 }
 
-func NewDefaultClient(ipAdress string) *Client {
-	client := &Client{
-		IPAddress:     ipAdress,
-		Name:          "",
-		Capacity:      100,
-		RatePerSecond: 10,
-		Tokens:        atomic.Int32{},
-	}
-	client.Tokens.Store(client.Capacity)
-
-	return client
-}
-
 // Allow checks if client has available tokens.
-//
-// This method is concurrently safe.
 func (c *Client) Allow() bool {
 	for {
-		current := c.Tokens.Load()
-		if current == 0 {
+		tokens := c.Tokens.Load()
+		if tokens <= 0 {
 			return false
 		}
-		if c.Tokens.CompareAndSwap(current, current-1) {
+		if c.Tokens.CompareAndSwap(tokens, tokens-1) {
 			return true
 		}
 	}

@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -26,9 +25,8 @@ func New(ctx context.Context, log *slog.Logger, cfg *config.Config, backends []*
 
 	clientsStorage := pg.New(pgApp.Pool)
 	clientsCache := cache.NewCache()
+	
 	clientsUseCase := usecase.New(log, clientsStorage, clientsCache)
-
-	fmt.Println(clientsCache)
 
 	httpApp := httpapp.New(log, cfg, backends, clientsUseCase, clientsUseCase)
 

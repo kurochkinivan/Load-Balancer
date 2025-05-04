@@ -1,2 +1,1 @@
-DROP TABLE IF EXISTS token_buckets;
 DROP TABLE IF EXISTS clients;

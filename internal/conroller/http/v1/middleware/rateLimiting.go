@@ -3,8 +3,8 @@ package middleware
 import (
 	"context"
 	"log/slog"
+	"net"
 	"net/http"
-	"strings"
 
 	"github.com/kurochkinivan/load_balancer/internal/entity"
 )
@@ -23,7 +23,11 @@ func RateLimitingMiddleware(
 	next http.Handler,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ipAddress := strings.Split(r.RemoteAddr, ":")[0]
+		ipAddress, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			http.Error(w, "failed to split host and port", http.StatusInternalServerError)
+			return
+		}
 
 		client, ok := clientProvider.Client(r.Context(), ipAddress)
 		if !ok {

@@ -18,7 +18,6 @@ func (s *Storage) Client(ctx context.Context, ipAdress string) (*entity.Client, 
 	sql, args, err := s.qb.
 		Select("id",
 			"ip_address",
-			"name",
 			"capacity",
 			"rate_per_second").
 		From(TableClients).
@@ -36,7 +35,6 @@ func (s *Storage) Client(ctx context.Context, ipAdress string) (*entity.Client, 
 	err = row.Scan(
 		&client.ID,
 		&client.IPAddress,
-		&client.Name,
 		&client.Capacity,
 		&client.RatePerSecond,
 	)
@@ -58,7 +56,6 @@ func (s *Storage) Clients(ctx context.Context) ([]*entity.Client, error) {
 	sql, args, err := s.qb.
 		Select("id",
 			"ip_address",
-			"name",
 			"capacity",
 			"rate_per_second").
 		From(TableClients).
@@ -80,14 +77,12 @@ func (s *Storage) Clients(ctx context.Context) ([]*entity.Client, error) {
 		err = rows.Scan(
 			&client.ID,
 			&client.IPAddress,
-			&client.Name,
 			&client.Capacity,
 			&client.RatePerSecond,
 		)
 		if err != nil {
 			return nil, pgerr.ErrScan(op, err)
 		}
-		client.Tokens.Store(client.Capacity)
 		clients = append(clients, client)
 	}
 
@@ -105,13 +100,11 @@ func (s *Storage) CreateClient(ctx context.Context, client *entity.Client) error
 		Insert(TableClients).
 		Columns(
 			"ip_address",
-			"name",
 			"capacity",
 			"rate_per_second",
 		).
 		Values(
 			client.IPAddress,
-			client.Name,
 			client.Capacity,
 			client.RatePerSecond,
 		).

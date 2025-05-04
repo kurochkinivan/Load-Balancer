@@ -51,7 +51,6 @@ func (h *ClientsHandler) clients(w http.ResponseWriter, r *http.Request, params 
 
 type createClientRequest struct {
 	IPAddress     string `json:"ip_address"`
-	Name          string `json:"name"`
 	Capacity      int32  `json:"capacity"`
 	RatePerSecond int32  `json:"rate_per_second"`
 }
@@ -66,7 +65,6 @@ func (h *ClientsHandler) createClient(w http.ResponseWriter, r *http.Request, pa
 
 	err = h.clientsUseCase.CreateClient(r.Context(), &entity.Client{
 		IPAddress:     req.IPAddress,
-		Name:          req.Name,
 		Capacity:      req.Capacity,
 		RatePerSecond: req.RatePerSecond,
 	})
