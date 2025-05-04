@@ -1,0 +1,169 @@
+openapi: 3.0.0
+info:
+  title: Load Balancer Clients API
+  description: API для управления клиентами и рейтлимитами в балансировщике нагрузки
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Локальный сервер
+
+tags:
+  - name: clients
+    description: Управление клиентами и рейтлимитами
+
+paths:
+  /v1/api/clients/:
+    get:
+      tags:
+        - clients
+      summary: Получить список всех клиентов
+      description: Возвращает список всех клиентов с их лимитами
+      responses:
+        '200':
+          description: Список клиентов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
+        '500':
+          description: Ошибка на стороне сервера
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+    post:
+      tags:
+        - clients
+      summary: Создать нового клиента
+      description: Добавляет нового клиента с указанными параметрами
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClientRequest'
+      responses:
+        '201':
+          description: Клиент успешно создан
+        '400':
+          description: Невалидный запрос
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '409':
+          description: Клиент уже существует
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Ошибка на стороне сервера
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /v1/api/clients/{ip_address}:
+    delete:
+      tags:
+        - clients
+      summary: Удалить клиента по IP-адресу
+      description: Удаляет клиента из системы по его IP-адресу
+      parameters:
+        - name: ip_address
+          in: path
+          required: true
+          description: IP-адрес клиента
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Клиент успешно удалён
+        '400':
+          description: Не указан IP-адрес
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Клиент не найден
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Ошибка на стороне сервера
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+components:
+  schemas:
+    Client:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Уникальный идентификатор клиента
+        ip_address:
+          type: string
+          description: IP-адрес клиента
+        name:
+          type: string
+          nullable: true
+          description: Имя клиента (необязательное поле)
+        capacity:
+          type: integer
+          description: Максимальное количество токенов
+        rate_per_second:
+          type: integer
+          description: Скорость пополнения токенов (в токенах в секунду)
+
+    CreateClientRequest:
+      type: object
+      required:
+        - ip_address
+        - capacity
+        - rate_per_second
+      properties:
+        ip_address:
+          type: string
+          description: IP-адрес клиента
+        name:
+          type: string
+          nullable: true
+          description: Имя клиента (необязательное)
+        capacity:
+          type: integer
+          description: Максимальное количество токенов
+        rate_per_second:
+          type: integer
+          description: Скорость пополнения токенов в секунду

@@ -52,8 +52,8 @@ func (h *ClientsHandler) clients(w http.ResponseWriter, r *http.Request, params 
 type createClientRequest struct {
 	IPAddress     string `json:"ip_address"`
 	Name          string `json:"name"`
-	Capacity      int    `json:"capacity"`
-	RatePerSecond int    `json:"rate_per_second"`
+	Capacity      int32    `json:"capacity"`
+	RatePerSecond int32    `json:"rate_per_second"`
 }
 
 func (h *ClientsHandler) createClient(w http.ResponseWriter, r *http.Request, params httprouter.Params) {

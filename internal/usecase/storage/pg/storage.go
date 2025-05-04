@@ -5,6 +5,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+const (
+	TableClients = "clients"
+)
+
 type Storage struct {
 	pool *pgxpool.Pool
 	qb   sq.StatementBuilderType

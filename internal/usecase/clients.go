@@ -12,27 +12,71 @@ import (
 )
 
 type ClientsUseCase struct {
-	log           *slog.Logger
-	clientStorage ClientStorage
+	log     *slog.Logger
+	storage ClientStorage
+	cache   ClientCache
 }
 
-func New(log *slog.Logger, clientStorage ClientStorage) *ClientsUseCase {
+func New(log *slog.Logger, clientStorage ClientStorage, cache ClientCache) *ClientsUseCase {
 	return &ClientsUseCase{
-		log:           log,
-		clientStorage: clientStorage,
+		log:     log,
+		storage: clientStorage,
+		cache:   cache,
 	}
 }
 
 type ClientStorage interface {
-	GetClients(ctx context.Context) ([]*entity.Client, error)
+	Clients(ctx context.Context) ([]*entity.Client, error)
+	Client(ctx context.Context, ipAdress string) (*entity.Client, error)
 	CreateClient(ctx context.Context, client *entity.Client) error
 	DeleteClient(ctx context.Context, ipAdress string) error
+}
+
+type ClientCache interface {
+	LoadClients(ctx context.Context, clients []*entity.Client) error
+	Client(ip_address string) (*entity.Client, bool)
+	AddClient(client *entity.Client)
+	DeleteClient(ip_address string)
+}
+
+func (c *ClientsUseCase) LoadClients(ctx context.Context) error {
+	const op = "ClientsUseCase.LoadClients"
+
+	clients, err := c.GetClients(ctx)
+	if err != nil {
+		c.log.Error("failed to get clients", sl.Error(err))
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	err = c.cache.LoadClients(ctx, clients)
+	if err != nil {
+		c.log.Error("failed to load clients to cache", sl.Error(err))
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
+}
+
+func (c *ClientsUseCase) Client(ctx context.Context, ipAdress string) (*entity.Client, bool) {
+	client, ok := c.cache.Client(ipAdress)
+	if ok {
+		return client, false
+	}
+
+	client, err := c.storage.Client(ctx, ipAdress)
+	if err != nil {
+		return nil, false
+	}
+
+	c.cache.AddClient(client)
+
+	return client, true
 }
 
 func (c *ClientsUseCase) GetClients(ctx context.Context) ([]*entity.Client, error) {
 	const op = "ClientsUseCase.GetClients"
 
-	clients, err := c.clientStorage.GetClients(ctx)
+	clients, err := c.storage.Clients(ctx)
 	if err != nil {
 		c.log.Error("failed to get clients", sl.Error(err))
 		return nil, fmt.Errorf("%s: %w", op, err)
@@ -44,7 +88,7 @@ func (c *ClientsUseCase) GetClients(ctx context.Context) ([]*entity.Client, erro
 func (c *ClientsUseCase) CreateClient(ctx context.Context, client *entity.Client) error {
 	const op = "ClientsUseCase.CreateClient"
 
-	err := c.clientStorage.CreateClient(ctx, client)
+	err := c.storage.CreateClient(ctx, client)
 	if err != nil {
 		if errors.Is(err, storage.ErrClientExists) {
 			c.log.Error("client already exists")
@@ -55,13 +99,15 @@ func (c *ClientsUseCase) CreateClient(ctx context.Context, client *entity.Client
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
+	c.cache.AddClient(client)
+
 	return nil
 }
 
 func (c *ClientsUseCase) DeleteClient(ctx context.Context, ipAdress string) error {
 	const op = "ClientsUseCase.DeleteClient"
 
-	err := c.clientStorage.DeleteClient(ctx, ipAdress)
+	err := c.storage.DeleteClient(ctx, ipAdress)
 	if err != nil {
 		if errors.Is(err, storage.ErrClientNotFound) {
 			c.log.Warn("client was not found")
@@ -71,6 +117,8 @@ func (c *ClientsUseCase) DeleteClient(ctx context.Context, ipAdress string) erro
 		c.log.Error("failed to delete client", sl.Error(err))
 		return fmt.Errorf("%s: %w", op, err)
 	}
+
+	c.cache.DeleteClient(ipAdress)
 
 	return nil
 }

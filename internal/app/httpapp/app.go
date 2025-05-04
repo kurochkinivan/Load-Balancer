@@ -30,7 +30,13 @@ const (
 	bytesLimit = 1 << 20 // 1024*1024
 )
 
-func New(log *slog.Logger, cfg *config.Config, backends []*entity.Backend, clientsUseCase v1.ClientsUseCase) *App {
+func New(
+	log *slog.Logger,
+	cfg *config.Config,
+	backends []*entity.Backend,
+	clientsUseCase v1.ClientsUseCase,
+	clientProvider middleware.ClientProvider,
+) *App {
 	r := httprouter.New()
 
 	balancer := roundrobin.New(backends)
@@ -40,9 +46,12 @@ func New(log *slog.Logger, cfg *config.Config, backends []*entity.Backend, clien
 	clietnsHandler := v1.NewClientsHandler(clientsUseCase, bytesLimit)
 	clietnsHandler.Register(r)
 
+	handler := middleware.RateLimitingMiddleware(log, clientProvider, r)
+	handler = middleware.LogMiddleware(log, handler)
+
 	server := &http.Server{
 		Addr:         net.JoinHostPort(cfg.Proxy.Host, cfg.Proxy.Port),
-		Handler:      middleware.LogMiddleware(log, r),
+		Handler:      handler,
 		ReadTimeout:  cfg.Proxy.ReadTimeout,
 		WriteTimeout: cfg.Proxy.WriteTimeout,
 		IdleTimeout:  cfg.Proxy.IdleTimeout,

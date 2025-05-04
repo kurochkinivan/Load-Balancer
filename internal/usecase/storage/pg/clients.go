@@ -2,16 +2,58 @@ package pg
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5"
 	"github.com/kurochkinivan/load_balancer/internal/entity"
 	"github.com/kurochkinivan/load_balancer/internal/usecase/storage"
 	"github.com/kurochkinivan/load_balancer/pkg/pgerr"
 )
 
-func (s *Storage) GetClients(ctx context.Context) ([]*entity.Client, error) {
-	const op = "storage.pg.GetClients"
+func (s *Storage) Client(ctx context.Context, ipAdress string) (*entity.Client, error) {
+	const op = "storage.pg.Client"
+
+	sql, args, err := s.qb.
+		Select("id",
+			"ip_address",
+			"name",
+			"capacity",
+			"rate_per_second").
+		From(TableClients).
+		Where(sq.Eq{
+			"ip_address": ipAdress,
+		}).
+		ToSql()
+	if err != nil {
+		return nil, pgerr.ErrCreateQuery(op, err)
+	}
+
+	row := s.pool.QueryRow(ctx, sql, args...)
+
+	client := new(entity.Client)
+	err = row.Scan(
+		&client.ID,
+		&client.IPAddress,
+		&client.Name,
+		&client.Capacity,
+		&client.RatePerSecond,
+	)
+	client.Tokens.Store(client.Capacity)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, storage.ErrClientNotFound
+		}
+
+		return nil, pgerr.ErrScan(op, err)
+	}
+
+	return client, nil
+}
+
+func (s *Storage) Clients(ctx context.Context) ([]*entity.Client, error) {
+	const op = "storage.pg.Clients"
 
 	sql, args, err := s.qb.
 		Select("id",
@@ -45,6 +87,7 @@ func (s *Storage) GetClients(ctx context.Context) ([]*entity.Client, error) {
 		if err != nil {
 			return nil, pgerr.ErrScan(op, err)
 		}
+		client.Tokens.Store(client.Capacity)
 		clients = append(clients, client)
 	}
 
