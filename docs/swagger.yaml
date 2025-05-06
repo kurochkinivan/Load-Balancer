@@ -95,10 +95,6 @@ paths:
                   $ref: '#/components/schemas/Client'
         '500':
           description: Ошибка на стороне сервера
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
 
     post:
       tags:
@@ -114,29 +110,12 @@ paths:
       responses:
         '201':
           description: Клиент успешно создан
-          headers:
-            Location:
-              schema:
-                type: string
-              description: URL созданного ресурса
         '400':
           description: Невалидный запрос
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
         '409':
           description: Клиент уже существует
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
         '500':
           description: Ошибка на стороне сервера
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
 
   /v1/api/clients/{ip_address}:
     delete:
@@ -156,20 +135,7 @@ paths:
           description: Клиент успешно удалён
         '400':
           description: Не указан IP-адрес
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
         '404':
           description: Клиент не найден
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
         '500':
           description: Ошибка на стороне сервера
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-                
