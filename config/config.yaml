@@ -30,4 +30,4 @@ postgresql:
   db: clients
   connection:
     attemprs: 5
-    delay: 5s
+    delay: 8s
