@@ -20,6 +20,25 @@ docker compose up -d
 go run cmd/loadBalancer/loadBalancer.go --path=config/config.yaml
 ```
 
+**Swagger** для API клиентов.
+
+Сваггер лежит в docs/swagger.yaml (сорян, сегодня без go-swagger)
+
+**Внимание:** изначально база клиентов пуста и rate-limiter не будет пускать никого. Для того, чтобы добавить пользователя, взаимодействуйте с API (запросы на работу с клиентами rate-limiter пропустит).
+
+```bash
+## Создать клиента:
+curl -X POST http://localhost:8080/v1/api/clients/ \
+  -H "Content-Type: application/json" \
+  -d '{"ip_address": "127.0.0.1", "capacity": 100, "rate_per_second": 10}'
+
+## Получить всех клиентов:
+curl -X GET http://localhost:8080/v1/api/clients/
+
+## Удалить клиента по его IP: 
+curl -X DELETE http://localhost:8080/v1/api/clients/127.0.0.1
+```
+
 **Запуск тестов:**
 
 ```bash
@@ -29,10 +48,6 @@ ab -n 5000 -c 100 http://localhost:8080/
 ## Тяжелый тест
 ab -n 20000 -c 1000 http://localhost:8080/
 ```
-
-**Swagger**
-
-Сваггер лежит в docs/swagger.yaml (сорян, сегодня без go-swagger)
 
 ## Ответы на вопросы:
 
