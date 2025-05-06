@@ -16,14 +16,13 @@ import (
 	"github.com/kurochkinivan/load_balancer/internal/conroller/http/v1/proxy"
 	"github.com/kurochkinivan/load_balancer/internal/entity"
 	roundrobin "github.com/kurochkinivan/load_balancer/internal/lib/roundRobin"
-	"github.com/kurochkinivan/load_balancer/internal/usecase/storage/cache"
 )
 
 type App struct {
 	log                *slog.Logger
 	server             *http.Server
 	reverseProxy       *proxy.ReverseProxy
-	clientsCache       *cache.ClientsCache
+	tokenRifiller      TokenRefiller
 	healtCheckInterval time.Duration
 	workers            int
 }
@@ -32,11 +31,15 @@ const (
 	bytesLimit = 1 << 20 // 1024*1024
 )
 
+type TokenRefiller interface {
+	StartTokenRefiller(ctx context.Context)
+}
+
 func New(
 	log *slog.Logger,
 	cfg *config.Config,
 	backends []*entity.Backend,
-	clientsCache *cache.ClientsCache,
+	tokenRifiller TokenRefiller,
 	clientsUseCase v1.ClientsUseCase,
 	clientProvider middleware.ClientProvider,
 ) *App {
@@ -72,7 +75,7 @@ func New(
 		log:                log,
 		server:             server,
 		reverseProxy:       reverseProxy,
-		clientsCache:       clientsCache,
+		tokenRifiller:      tokenRifiller,
 		healtCheckInterval: cfg.Proxy.HealthCheck.Interval,
 		workers:            cfg.Proxy.HealthCheck.WorkersCount,
 	}
@@ -86,7 +89,7 @@ func (a *App) MustStart(ctx context.Context) {
 
 func (a *App) Start(ctx context.Context) error {
 	go a.reverseProxy.StartHealthChecks(ctx, a.healtCheckInterval, a.workers)
-	go a.clientsCache.StartTokenRefiller(ctx)
+	go a.tokenRifiller.StartTokenRefiller(ctx)
 
 	a.log.Info("listening to the server...", slog.String("addr", a.server.Addr))
 	err := a.server.ListenAndServe()
