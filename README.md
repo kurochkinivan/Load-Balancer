@@ -71,6 +71,7 @@ ab -n 20000 -c 1000 http://localhost:8080/
 -  http-сервер (httpapp)
    -  health check всех бэкендов раз в interval времени (reverseProxy.StartHealthChecks);
    -  пополнение токенов для клиентов раз в секунду (clientsCache.StartTokenRefiller).
+   -  мультиплексор запросов (взял роутер джулиана шмидта, чтобы удобнее с параметрами работать)
 
 ## Реализованный функционал:
 
