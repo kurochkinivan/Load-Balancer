@@ -41,7 +41,7 @@ func main() {
 	defer cancel()
 
 	application := app.New(ctx, log, cfg, backends)
-	go application.Run(ctx)
+	go application.Run(ctx, cfg.PostgreSQL.Connection)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)

@@ -10,7 +10,7 @@ import (
 
 type Config struct {
 	Env        string           `yaml:"env" env-required:"true"`
-	Proxy      ProxyConfig            `yaml:"proxy" env-required:"true"`
+	Proxy      ProxyConfig      `yaml:"proxy" env-required:"true"`
 	PostgreSQL PostgreSQLConfig `yaml:"postgresql" env-required:"true"`
 	Backends   []string         `yaml:"backends" env-required:"true"`
 }
@@ -30,11 +30,17 @@ type HealthCheck struct {
 }
 
 type PostgreSQLConfig struct {
-	Host     string `yaml:"host" env-required:"true"`
-	Port     string `yaml:"port" env-required:"true"`
-	Username string `yaml:"username" env-required:"true"`
-	Password string `yaml:"password" env-required:"true"`
-	DB       string `yaml:"db" env-required:"true"`
+	Host       string               `yaml:"host" env-default:"localhost"`
+	Port       string               `yaml:"port" env-default:"5435"`
+	Username   string               `yaml:"username" env-default:"postgres"`
+	Password   string               `yaml:"password" env-default:"postgres"`
+	DB         string               `yaml:"db" env-default:"clients"`
+	Connection PostgreSQLConnection `yaml:"connection"`
+}
+
+type PostgreSQLConnection struct {
+	Attempts int           `yaml:"attempts" env-default:"5"`
+	Delay    time.Duration `yaml:"delay" env-default:"5s"`
 }
 
 func MustLoadConfig() *Config {

@@ -28,3 +28,6 @@ postgresql:
   username: postgres
   password: postgres
   db: clients
+  connection:
+    attemprs: 5
+    delay: 5s

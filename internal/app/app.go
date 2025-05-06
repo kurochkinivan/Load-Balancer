@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"log/slog"
-	"time"
 
 	"github.com/kurochkinivan/load_balancer/internal/app/httpapp"
 	"github.com/kurochkinivan/load_balancer/internal/app/pgapp"
@@ -37,8 +36,8 @@ func New(ctx context.Context, log *slog.Logger, cfg *config.Config, backends []*
 	}
 }
 
-func (a *App) Run(ctx context.Context) {
-	go a.PostgreSQLApp.MustRun(ctx, 5, 5*time.Second)
+func (a *App) Run(ctx context.Context, cfg config.PostgreSQLConnection) {
+	go a.PostgreSQLApp.MustRun(ctx, cfg.Attempts, cfg.Delay)
 	go a.HTTPApp.MustStart(ctx)
 }
 
