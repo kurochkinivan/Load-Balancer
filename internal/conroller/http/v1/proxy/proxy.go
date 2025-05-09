@@ -11,6 +11,7 @@ import (
 	"net/http/httputil"
 	"syscall"
 
+	httperror "github.com/kurochkinivan/load_balancer/internal/conroller/http/v1/errors"
 	"github.com/kurochkinivan/load_balancer/internal/entity"
 	"github.com/kurochkinivan/load_balancer/internal/lib/sl"
 )
@@ -39,8 +40,10 @@ func New(log *slog.Logger, backends []*entity.Backend, balancer LoadBalanceAlgor
 func (p *ReverseProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	next, ok := p.balancer.Next()
 	if !ok {
-		http.Error(w, ErrNoBackendsAvailable.Error(), http.StatusServiceUnavailable)
-		return
+		httpError := httperror.ErrNoBackendsAvailable
+		w.WriteHeader(httpError.Code)
+		w.Write(httpError.Marshal())
+		return 
 	}
 
 	backend := p.backends[next]
@@ -73,7 +76,7 @@ func (p *ReverseProxy) handleError(w http.ResponseWriter, r *http.Request, err e
 	)
 
 	if errors.Is(err, syscall.ECONNREFUSED) {
-		log.Warn("backend refused connection", sl.Error(ErrBackendRefusedConnection))
+		log.Warn("backend refused connection")
 		backend.SetAvailable(false)
 		p.ServeHTTP(w, r)
 		return

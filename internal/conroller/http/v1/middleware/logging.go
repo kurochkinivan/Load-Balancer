@@ -8,9 +8,7 @@ import (
 
 // LogMiddleware wraps an http.Handler and logs incoming requests.
 // It logs the client IP, request path, duration of the request, and the status code of the response.
-//
-// The logger is expected to be a *slog.Logger.
-func LogMiddleware(logger *slog.Logger, next errorHandler) errorHandler {
+func LogMiddleware(logger *slog.Logger, next AppHandler) AppHandler {
 	return func(w http.ResponseWriter, r *http.Request) error {
 		start := time.Now()
 		path := r.URL.Path

@@ -1,7 +1,8 @@
-package apperror
+package httperror
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 // HTTPError представляет ошибку с HTTP-статусом
@@ -10,10 +11,14 @@ type HTTPError struct {
 	Message string `json:"message"`
 }
 
-func New(message string, status int) *HTTPError {
+func New(err error, message string, status int) *HTTPError {
+	if err != nil {
+		message = fmt.Sprintf("%s: %v", message, err)
+	}
+
 	return &HTTPError{
-		Message:  message,
-		Code: status,
+		Message: message,
+		Code:    status,
 	}
 }
 
@@ -26,9 +31,6 @@ func (e *HTTPError) StatusCode() int {
 }
 
 func (e *HTTPError) Marshal() []byte {
-	data, err := json.Marshal(e)
-	if err != nil {
-		return nil
-	}
+	data, _ := json.Marshal(e)
 	return data
 }

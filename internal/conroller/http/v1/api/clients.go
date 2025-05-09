@@ -7,6 +7,8 @@ import (
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
+	httperror "github.com/kurochkinivan/load_balancer/internal/conroller/http/v1/errors"
+	"github.com/kurochkinivan/load_balancer/internal/conroller/http/v1/middleware"
 	"github.com/kurochkinivan/load_balancer/internal/entity"
 	"github.com/kurochkinivan/load_balancer/internal/usecase"
 )
@@ -30,23 +32,23 @@ func NewClientsHandler(clientsUseCase ClientsUseCase, bytesLimit int64) *Clients
 }
 
 func (h *ClientsHandler) Register(router *httprouter.Router) {
-	router.GET("/v1/api/clients/", h.clients)
-	router.POST("/v1/api/clients/", h.createClient)
-	router.DELETE("/v1/api/clients/:ip_address", h.deleteClient)
+	router.GET("/v1/api/clients/", middleware.ErrorMiddlewareParams(h.clients))
+	router.POST("/v1/api/clients/", middleware.ErrorMiddlewareParams(h.createClient))
+	router.DELETE("/v1/api/clients/:ip_address", middleware.ErrorMiddlewareParams(h.deleteClient))
 }
 
-func (h *ClientsHandler) clients(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func (h *ClientsHandler) clients(w http.ResponseWriter, r *http.Request, params httprouter.Params) error {
 	clients, err := h.clientsUseCase.Clients(r.Context())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return httperror.InternalServerError(err, "failed to get all clients")
 	}
 
 	err = json.NewEncoder(w).Encode(clients)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return httperror.ErrSerialize(err)
 	}
+
+	return nil
 }
 
 type createClientRequest struct {
@@ -55,12 +57,11 @@ type createClientRequest struct {
 	RatePerSecond int32  `json:"rate_per_second"`
 }
 
-func (h *ClientsHandler) createClient(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func (h *ClientsHandler) createClient(w http.ResponseWriter, r *http.Request, params httprouter.Params) error {
 	var req createClientRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return httperror.ErrDeserialize(err)
 	}
 
 	err = h.clientsUseCase.CreateClient(r.Context(), &entity.Client{
@@ -70,34 +71,33 @@ func (h *ClientsHandler) createClient(w http.ResponseWriter, r *http.Request, pa
 	})
 	if err != nil {
 		if errors.Is(err, usecase.ErrClientExists) {
-			http.Error(w, "client already exists", http.StatusConflict)
-			return
+			return httperror.Conflict(err, "client already exists")
 		}
 
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return httperror.InternalServerError(err, "failed to create client")
 	}
 
 	w.WriteHeader(http.StatusCreated)
+
+	return nil
 }
 
-func (h *ClientsHandler) deleteClient(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+func (h *ClientsHandler) deleteClient(w http.ResponseWriter, r *http.Request, params httprouter.Params) error {
 	ipAdress := params.ByName("ip_address")
 	if ipAdress == "" {
-		http.Error(w, "ipAdress is required", http.StatusBadRequest)
-		return
+		return httperror.BadRequest(nil, "ipAdress is required")
 	}
 
 	err := h.clientsUseCase.DeleteClient(r.Context(), ipAdress)
 	if err != nil {
 		if errors.Is(err, usecase.ErrClientNotFound) {
-			http.Error(w, "client not found", http.StatusNotFound)
-			return
+			return httperror.NotFound(err, "client not found")
 		}
 
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return httperror.InternalServerError(err, "failed to delete client")
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+	
+	return nil
 }
