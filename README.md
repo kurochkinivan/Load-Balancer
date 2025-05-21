@@ -32,6 +32,11 @@ curl -X POST http://localhost:8080/v1/api/clients/ \
   -H "Content-Type: application/json" \
   -d '{"ip_address": "127.0.0.1", "capacity": 100, "rate_per_second": 10}'
 
+## Изменить клиента по его IP: 
+curl -X PUT http://localhost:8080/v1/api/clients/127.0.0.1 \
+   -H "Content-Type: application/json" \
+   -d '{"capacity": 200, "rate_per_second": 50}'
+
 ## Получить всех клиентов:
 curl -X GET http://localhost:8080/v1/api/clients/
 
