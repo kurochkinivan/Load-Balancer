@@ -63,6 +63,23 @@ components:
           example: 10
           description: Скорость пополнения токенов
 
+    UpdateClientRequest:
+      type: object
+      required:
+        - capacity
+        - rate_per_second
+      properties:
+        capacity:
+          type: integer
+          format: int32
+          example: 100
+          description: Максимальное количество токенов
+        rate_per_second:
+          type: integer
+          format: int32
+          example: 10
+          description: Скорость пополнения токенов
+
     Error:
       type: object
       required:
@@ -95,6 +112,10 @@ paths:
                   $ref: '#/components/schemas/Client'
         '500':
           description: Ошибка на стороне сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
     post:
       tags:
@@ -112,12 +133,64 @@ paths:
           description: Клиент успешно создан
         '400':
           description: Невалидный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '409':
           description: Клиент уже существует
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Ошибка на стороне сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /v1/api/clients/{ip_address}:
+    put:
+      tags:
+        - clients
+      summary: Обновить параметры клиента по IP-адресу
+      description: Обновляет параметры рейтлимита клиента по его IP-адресу
+      parameters:
+        - name: ip_address
+          in: path
+          required: true
+          description: IP-адрес клиента
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateClientRequest'
+      responses:
+        '200':
+          description: Клиент успешно обновлен
+        '400':
+          description: Невалидный запрос или не указан IP-адрес
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Клиент не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Ошибка на стороне сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
     delete:
       tags:
         - clients
@@ -135,7 +208,19 @@ paths:
           description: Клиент успешно удалён
         '400':
           description: Не указан IP-адрес
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: Клиент не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Ошибка на стороне сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

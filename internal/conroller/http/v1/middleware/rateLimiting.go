@@ -51,7 +51,7 @@ func RateLimitingMiddleware(
 		if !ok {
 			log.Warn("unknown client", slog.String("ip_address", ipAddress))
 			if clientCreator != nil {
-				err = clientCreator.CreateClient(r.Context(), &entity.Client{IPAddress: ipAddress, Capacity: 100, RatePerSecond: 10})
+				err = clientCreator.CreateClient(r.Context(), &entity.Client{IPAddress: ipAddress, Capacity: 1000, RatePerSecond: 100})
 				if err != nil {
 					log.Error("failed to create client", sl.Error(err))
 				}

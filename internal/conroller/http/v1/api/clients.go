@@ -16,6 +16,7 @@ import (
 type ClientsUseCase interface {
 	Clients(ctx context.Context) ([]*entity.Client, error)
 	CreateClient(ctx context.Context, client *entity.Client) error
+	UpdateClient(ctx context.Context, client *entity.Client) error
 	DeleteClient(ctx context.Context, ipAdress string) error
 }
 
@@ -34,6 +35,7 @@ func NewClientsHandler(clientsUseCase ClientsUseCase, bytesLimit int64) *Clients
 func (h *ClientsHandler) Register(router *httprouter.Router) {
 	router.GET("/v1/api/clients/", middleware.ErrorMiddlewareParams(h.clients))
 	router.POST("/v1/api/clients/", middleware.ErrorMiddlewareParams(h.createClient))
+	router.PUT("/v1/api/clients/:ip_address", middleware.ErrorMiddlewareParams(h.updateClient))
 	router.DELETE("/v1/api/clients/:ip_address", middleware.ErrorMiddlewareParams(h.deleteClient))
 }
 
@@ -82,6 +84,41 @@ func (h *ClientsHandler) createClient(w http.ResponseWriter, r *http.Request, pa
 	return nil
 }
 
+type updateClientRequest struct {
+	Capacity      int32 `json:"capacity"`
+	RatePerSecond int32 `json:"rate_per_second"`
+}
+
+func (h *ClientsHandler) updateClient(w http.ResponseWriter, r *http.Request, params httprouter.Params) error {
+	ipAdress := params.ByName("ip_address")
+	if ipAdress == "" {
+		return httperror.BadRequest(nil, "ipAdress is required")
+	}
+
+	var req updateClientRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return httperror.ErrDeserialize(err)
+	}
+
+	err = h.clientsUseCase.UpdateClient(r.Context(), &entity.Client{
+		IPAddress:     ipAdress,
+		Capacity:      req.Capacity,
+		RatePerSecond: req.RatePerSecond,
+	})
+	if err != nil {
+		if errors.Is(err, usecase.ErrClientNotFound) {
+			return httperror.NotFound(err, "client not found")
+		}
+
+		return httperror.InternalServerError(err, "failed to update client")
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	return nil
+}
+
 func (h *ClientsHandler) deleteClient(w http.ResponseWriter, r *http.Request, params httprouter.Params) error {
 	ipAdress := params.ByName("ip_address")
 	if ipAdress == "" {
@@ -98,6 +135,6 @@ func (h *ClientsHandler) deleteClient(w http.ResponseWriter, r *http.Request, pa
 	}
 
 	w.WriteHeader(http.StatusNoContent)
-	
+
 	return nil
 }

@@ -126,6 +126,43 @@ func (s *Storage) CreateClient(ctx context.Context, client *entity.Client) error
 	return nil
 }
 
+func (s *Storage) UpdateClient(ctx context.Context, client *entity.Client) error {
+	const op = "storage.pg.UpdateClient"
+
+	sql, args, err := s.qb.
+		Insert(TableClients).
+		Columns(
+			"ip_address",
+			"capacity",
+			"rate_per_second",
+		).
+		Values(
+			client.IPAddress,
+			client.Capacity,
+			client.RatePerSecond,
+		).
+		Suffix(`
+			ON CONFLICT (ip_address) DO UPDATE SET 
+				capacity = EXCLUDED.capacity, 
+				rate_per_second = EXCLUDED.rate_per_second`,
+		).
+		ToSql()
+	if err != nil {
+		return pgerr.ErrCreateQuery(op, err)
+	}
+
+	cmdTag, err := s.pool.Exec(ctx, sql, args...)
+	if err != nil {
+		return pgerr.ErrExec(op, err)
+	}
+
+	if cmdTag.RowsAffected() == 0 {
+		return storage.ErrClientNotFound
+	}
+
+	return nil
+}
+
 func (s *Storage) DeleteClient(ctx context.Context, ipAddress string) error {
 	const op = "storage.pg.DeleteClient"
 

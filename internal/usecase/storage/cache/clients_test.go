@@ -59,8 +59,8 @@ func TestLRUClientCache_Client(t *testing.T) {
 	client2 := &entity.Client{IPAddress: "192.168.1.2"}
 
 	// Add clients to cache
-	cache.AddClient(client1)
-	cache.AddClient(client2)
+	cache.UpdateClient(client1)
+	cache.UpdateClient(client2)
 
 	tests := []struct {
 		name      string
@@ -101,15 +101,15 @@ func TestLRUClientCache_Client(t *testing.T) {
 	// Test that accessing a client moves it to the front of the list
 	// First, let's get the list back to a known state
 	cache = NewClientsCache(logger, 2)
-	cache.AddClient(client1) // Most recently used
-	cache.AddClient(client2) // Least recently used
+	cache.UpdateClient(client1) // Most recently used
+	cache.UpdateClient(client2) // Least recently used
 
 	// Now get client1, which should move it to the front
 	_, _ = cache.Client(client1.IPAddress)
 
 	// Add a third client, which should evict client2 (least recently used)
 	client3 := &entity.Client{IPAddress: "192.168.1.3"}
-	cache.AddClient(client3)
+	cache.UpdateClient(client3)
 
 	// Check that client2 was evicted
 	_, found := cache.Client(client2.IPAddress)
@@ -123,7 +123,7 @@ func TestLRUClientCache_Client(t *testing.T) {
 	assert.True(t, found)
 }
 
-func TestLRUClientCache_AddClient(t *testing.T) {
+func TestLRUClientCache_UpdateClient(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	t.Run("Add clients without exceeding capacity", func(t *testing.T) {
@@ -136,7 +136,7 @@ func TestLRUClientCache_AddClient(t *testing.T) {
 		}
 
 		for _, client := range clients {
-			cache.AddClient(client)
+			cache.UpdateClient(client)
 		}
 
 		// Verify all clients are in the cache
@@ -160,14 +160,14 @@ func TestLRUClientCache_AddClient(t *testing.T) {
 		client3 := &entity.Client{IPAddress: "192.168.1.3"}
 
 		// Add first two clients
-		cache.AddClient(client1)
-		cache.AddClient(client2)
+		cache.UpdateClient(client1)
+		cache.UpdateClient(client2)
 
 		// Verify the cache state
 		assert.Equal(t, 2, len(cache.cache))
 
 		// Add third client, which should evict the least recently used (client1)
-		cache.AddClient(client3)
+		cache.UpdateClient(client3)
 
 		// Check if client1 was evicted
 		_, found := cache.Client(client1.IPAddress)
@@ -193,8 +193,8 @@ func TestLRUClientCache_AddClient(t *testing.T) {
 		client2 := &entity.Client{IPAddress: "192.168.1.1", Tokens: atomic.Int32{}} // Same IP address as client1 but different properties
 		client2.Tokens.Store(10)
 
-		cache.AddClient(client1)
-		cache.AddClient(client2)
+		cache.UpdateClient(client1)
+		cache.UpdateClient(client2)
 
 		// Verify the cache only contains one client (the updated one)
 		assert.Equal(t, 1, len(cache.cache))
@@ -211,7 +211,7 @@ func TestLRUClientCache_AddClient(t *testing.T) {
 		cache := NewClientsCache(logger, 0)
 
 		client := &entity.Client{IPAddress: "192.168.1.1"}
-		cache.AddClient(client)
+		cache.UpdateClient(client)
 
 		// Verify the client was not added
 		_, found := cache.Client(client.IPAddress)
@@ -236,7 +236,7 @@ func TestLRUClientCache_DeleteClient(t *testing.T) {
 	}
 	
 	for _, client := range clients {
-		cache.AddClient(client)
+		cache.UpdateClient(client)
 	}
 	
 	t.Run("Delete existing client", func(t *testing.T) {

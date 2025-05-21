@@ -29,12 +29,13 @@ type ClientStorage interface {
 	Clients(ctx context.Context) ([]*entity.Client, error)
 	Client(ctx context.Context, ipAdress string) (*entity.Client, error)
 	CreateClient(ctx context.Context, client *entity.Client) error
+	UpdateClient(ctx context.Context, client *entity.Client) error
 	DeleteClient(ctx context.Context, ipAdress string) error
 }
 
 type ClientCache interface {
 	Client(ip_address string) (*entity.Client, bool)
-	AddClient(client *entity.Client)
+	UpdateClient(client *entity.Client)
 	DeleteClient(ip_address string)
 }
 
@@ -52,7 +53,7 @@ func (c *ClientsUseCase) Client(ctx context.Context, ipAdress string) (*entity.C
 		return nil, false
 	}
 
-	c.cache.AddClient(client)
+	c.cache.UpdateClient(client)
 
 	return client, true
 }
@@ -83,7 +84,26 @@ func (c *ClientsUseCase) CreateClient(ctx context.Context, client *entity.Client
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	c.cache.AddClient(client)
+	c.cache.UpdateClient(client)
+
+	return nil
+}
+
+func (c *ClientsUseCase) UpdateClient(ctx context.Context, client *entity.Client) error {
+	const op = "ClientsUseCase.UpdateClient"
+
+	err := c.storage.UpdateClient(ctx, client)
+	if err != nil {
+		if errors.Is(err, storage.ErrClientNotFound) {
+			c.log.Warn("client was not found")
+			return fmt.Errorf("%s: %w", op, ErrClientNotFound)
+		}
+
+		c.log.Error("failed to update client", sl.Error(err))
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	c.cache.UpdateClient(client)
 
 	return nil
 }

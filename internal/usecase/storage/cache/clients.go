@@ -47,7 +47,7 @@ func (c *LRUClientCache) Client(ipAddress string) (*entity.Client, bool) {
 	return nil, false
 }
 
-func (c *LRUClientCache) AddClient(client *entity.Client) {
+func (c *LRUClientCache) UpdateClient(client *entity.Client) {
 	if c.maxElements == 0 {
 		return
 	}
