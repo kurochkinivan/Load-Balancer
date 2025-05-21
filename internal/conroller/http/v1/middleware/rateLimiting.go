@@ -9,6 +9,7 @@ import (
 
 	httperror "github.com/kurochkinivan/load_balancer/internal/conroller/http/v1/errors"
 	"github.com/kurochkinivan/load_balancer/internal/entity"
+	"github.com/kurochkinivan/load_balancer/internal/lib/sl"
 )
 
 // ClientProvider is an interface that defines the method to retrieve a client based on IP address.
@@ -16,11 +17,17 @@ type ClientProvider interface {
 	Client(ctx context.Context, ipAdress string) (*entity.Client, bool)
 }
 
+// ClientProvider is an interface that defines the method to create a client
+type ClientCreator interface {
+	CreateClient(ctx context.Context, client *entity.Client) error
+}
+
 // RateLimitingMiddleware is an HTTP middleware that applies rate limiting based on client IP address.
 // It uses a ClientProvider to retrieve client information and check if the client is allowed to proceed.
 func RateLimitingMiddleware(
 	log *slog.Logger,
 	clientProvider ClientProvider,
+	clientCreator ClientCreator,
 	next AppHandler,
 ) AppHandler {
 	return func(w http.ResponseWriter, r *http.Request) error {
@@ -41,7 +48,14 @@ func RateLimitingMiddleware(
 		client, ok := clientProvider.Client(r.Context(), ipAddress)
 		if !ok {
 			log.Warn("unknown client", slog.String("ip_address", ipAddress))
-			return httperror.ErrUnknownClient
+			if clientCreator != nil {
+				err = clientCreator.CreateClient(r.Context(), &entity.Client{IPAddress: ipAddress, Capacity: 100, RatePerSecond: 10})
+				if err != nil {
+					log.Error("failed to create client", sl.Error(err))
+				}
+			} else {
+				return httperror.ErrUnknownClient
+			}
 		}
 
 		// Check if the client is allowed to proceed based on rate limiting.
@@ -53,4 +67,3 @@ func RateLimitingMiddleware(
 		return next(w, r)
 	}
 }
-

@@ -27,7 +27,7 @@ func New(ctx context.Context, log *slog.Logger, cfg *config.Config, backends []*
 
 	clientsUseCase := usecase.New(log, clientsStorage, clientsCache)
 
-	httpApp := httpapp.New(log, cfg, backends, clientsCache, clientsUseCase, clientsUseCase)
+	httpApp := httpapp.New(log, cfg, backends, clientsCache, clientsUseCase, clientsUseCase, clientsUseCase)
 
 	return &App{
 		log:           log,

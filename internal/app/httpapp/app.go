@@ -42,6 +42,7 @@ func New(
 	tokenRifiller TokenRefiller,
 	clientsUseCase v1.ClientsUseCase,
 	clientProvider middleware.ClientProvider,
+	clientCreator middleware.ClientCreator,
 ) *App {
 	r := httprouter.New()
 
@@ -59,7 +60,7 @@ func New(
 	}
 
 	// Middleware chain
-	handler := middleware.RateLimitingMiddleware(log, clientProvider, baseHandler)
+	handler := middleware.RateLimitingMiddleware(log, clientProvider, clientCreator, baseHandler)
 	handler = middleware.LogMiddleware(log, handler)
 	finalHandler := middleware.ErrorMiddleware(handler)
 
