@@ -24,6 +24,8 @@ type ClientCreator interface {
 
 // RateLimitingMiddleware is an HTTP middleware that applies rate limiting based on client IP address.
 // It uses a ClientProvider to retrieve client information and check if the client is allowed to proceed.
+//
+// ClientCreator can be nil. If it is not nil, it will be used to create a default client if the client is not found in the database.
 func RateLimitingMiddleware(
 	log *slog.Logger,
 	clientProvider ClientProvider,
