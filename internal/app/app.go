@@ -23,7 +23,7 @@ func New(ctx context.Context, log *slog.Logger, cfg *config.Config, backends []*
 	pgApp := pgapp.New(ctx, log, cfg.PostgreSQL)
 
 	clientsStorage := pg.New(pgApp.Pool)
-	clientsCache := cache.NewClientsCache(log)
+	clientsCache := cache.NewClientsCache(log, cfg.Cache.MaxElements)
 
 	clientsUseCase := usecase.New(log, clientsStorage, clientsCache)
 

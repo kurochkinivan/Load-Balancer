@@ -41,8 +41,11 @@ type ClientCache interface {
 func (c *ClientsUseCase) Client(ctx context.Context, ipAdress string) (*entity.Client, bool) {
 	client, ok := c.cache.Client(ipAdress)
 	if ok {
+		c.log.Info("cache hit!", slog.String("ipAdress", ipAdress))
 		return client, true
 	}
+
+	c.log.Info("cache miss, going to db...", slog.String("ipAdress", ipAdress))
 
 	client, err := c.storage.Client(ctx, ipAdress)
 	if err != nil {

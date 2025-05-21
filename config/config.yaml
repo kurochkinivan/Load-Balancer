@@ -31,3 +31,6 @@ postgresql:
   connection:
     attemprs: 5
     delay: 8s
+
+cache:
+  max_elements: 10

@@ -12,6 +12,7 @@ type Config struct {
 	Env        string           `yaml:"env" env-required:"true"`
 	Proxy      ProxyConfig      `yaml:"proxy" env-required:"true"`
 	PostgreSQL PostgreSQLConfig `yaml:"postgresql" env-required:"true"`
+	Cache      Cache            `yaml:"cache" env-required:"true"`
 	Backends   []string         `yaml:"backends" env-required:"true"`
 }
 
@@ -41,6 +42,10 @@ type PostgreSQLConfig struct {
 type PostgreSQLConnection struct {
 	Attempts int           `yaml:"attempts" env-default:"5"`
 	Delay    time.Duration `yaml:"delay" env-default:"5s"`
+}
+
+type Cache struct {
+	MaxElements int `yaml:"max_elements" env-default:"50"`
 }
 
 func MustLoadConfig() *Config {
