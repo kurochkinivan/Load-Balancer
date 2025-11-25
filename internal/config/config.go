@@ -9,11 +9,12 @@ import (
 )
 
 type Config struct {
-	Env        string           `yaml:"env" env-required:"true"`
-	Proxy      ProxyConfig      `yaml:"proxy" env-required:"true"`
-	PostgreSQL PostgreSQLConfig `yaml:"postgresql" env-required:"true"`
-	Cache      Cache            `yaml:"cache" env-required:"true"`
-	Backends   []string         `yaml:"backends" env-required:"true"`
+	Env          string           `yaml:"env" env-required:"true"`
+	Proxy        ProxyConfig      `yaml:"proxy" env-required:"true"`
+	PostgreSQL   PostgreSQLConfig `yaml:"postgresql" env-required:"true"`
+	Cache        Cache            `yaml:"cache" env-required:"true"`
+	Backends     []string         `yaml:"backends" env-required:"true"`
+	RateLimiting RateLimiting     `yaml:"rate_limiting" env-required:"true"`
 }
 
 type ProxyConfig struct {
@@ -46,6 +47,11 @@ type PostgreSQLConnection struct {
 
 type Cache struct {
 	MaxElements int `yaml:"max_elements" env-default:"50"`
+}
+
+type RateLimiting struct {
+	DefaultCapacity      int32 `yaml:"default_capacity" env-required:"true"`
+	DefaultRatePerSecond int32 `yaml:"default_rate_per_second" env-required:"true"`
 }
 
 func MustLoadConfig() *Config {

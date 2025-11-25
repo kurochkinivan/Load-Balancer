@@ -36,7 +36,7 @@ func startTestServer(log *slog.Logger, port string) {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Info("incoming request",
+		log.Debug("incoming request",
 			slog.String("url", r.URL.Path),
 			slog.String("host_header", r.Host),
 			slog.String("port", port),

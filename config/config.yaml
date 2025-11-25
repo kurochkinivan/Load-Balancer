@@ -1,4 +1,4 @@
-env: local # local || prod
+env: prod # local || prod
 
 proxy: 
   host: localhost
@@ -34,3 +34,7 @@ postgresql:
 
 cache:
   max_elements: 10
+
+rate_limiting:
+  default_capacity: 10000
+  default_rate_per_second: 1000

@@ -78,7 +78,7 @@ func (p *ReverseProxy) healthCheckAllBackends(tokens chan struct{}) {
 			}
 
 			if resp.StatusCode == http.StatusOK {
-				log.Info("backend is healthy")
+				log.Debug("backend is healthy")
 				backend.SetAvailable(true)
 			} else {
 				log.Warn("backend is unhealthy", slog.String("status_code", resp.Status))

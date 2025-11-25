@@ -43,6 +43,7 @@ func New(
 	clientsUseCase v1.ClientsUseCase,
 	clientProvider middleware.ClientProvider,
 	clientCreator middleware.ClientCreator,
+	defaultCapacity, defaultRatePerSecond int32,
 ) *App {
 	r := httprouter.New()
 
@@ -60,7 +61,7 @@ func New(
 	}
 
 	// Middleware chain
-	handler := middleware.RateLimitingMiddleware(log, clientProvider, clientCreator, baseHandler)
+	handler := middleware.RateLimitingMiddleware(log, clientProvider, clientCreator, defaultCapacity, defaultRatePerSecond, baseHandler)
 	handler = middleware.LogMiddleware(log, handler)
 	finalHandler := middleware.ErrorMiddleware(handler)
 

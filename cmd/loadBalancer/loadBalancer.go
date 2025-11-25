@@ -40,7 +40,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	application := app.New(ctx, log, cfg, backends)
+	application := app.New(ctx, log, cfg, backends, cfg.RateLimiting.DefaultCapacity, cfg.RateLimiting.DefaultRatePerSecond)
 	go application.Run(ctx, cfg.PostgreSQL.Connection)
 
 	stop := make(chan os.Signal, 1)

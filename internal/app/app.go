@@ -19,7 +19,7 @@ type App struct {
 	PostgreSQLApp *pgapp.App
 }
 
-func New(ctx context.Context, log *slog.Logger, cfg *config.Config, backends []*entity.Backend) *App {
+func New(ctx context.Context, log *slog.Logger, cfg *config.Config, backends []*entity.Backend, defaultCapacity, defaultRatePerSecond int32) *App {
 	pgApp := pgapp.New(ctx, log, cfg.PostgreSQL)
 
 	clientsStorage := pg.New(pgApp.Pool)
@@ -27,7 +27,7 @@ func New(ctx context.Context, log *slog.Logger, cfg *config.Config, backends []*
 
 	clientsUseCase := usecase.New(log, clientsStorage, clientsCache)
 
-	httpApp := httpapp.New(log, cfg, backends, clientsCache, clientsUseCase, clientsUseCase, clientsUseCase)
+	httpApp := httpapp.New(log, cfg, backends, clientsCache, clientsUseCase, clientsUseCase, clientsUseCase, defaultCapacity, defaultRatePerSecond)
 
 	return &App{
 		log:           log,
